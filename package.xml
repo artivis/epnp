@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package>
+  <name>epnp</name>
+  <version>0.0.1</version>
+  <description>Efficient Perspective-n-Point Camera Pose</description>
+
+  <license>BSD</license>
+
+  <maintainer email="Deray@todo.todo">Jeremie Deray</maintainer>
+
+  <url type="website">http://cvlab.epfl.ch/EPnP/index.php</url>
+
+  <author>V. Lepetit, EPFL</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+
+  <run_depend>roscpp</run_depend>
+
+</package>
