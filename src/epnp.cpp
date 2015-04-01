@@ -87,18 +87,18 @@ void epnp::add_correspondence(double X, double Y, double Z, double u, double v)
   us[2 * number_of_correspondences    ] = u;
   us[2 * number_of_correspondences + 1] = v;
 
-  number_of_correspondences++;
+  ++number_of_correspondences;
 }
 
 void epnp::choose_control_points(void)
 {
   // Take C0 as the reference points centroid:
   cws[0][0] = cws[0][1] = cws[0][2] = 0;
-  for(int i = 0; i < number_of_correspondences; i++)
-    for(int j = 0; j < 3; j++)
+  for(int i = 0; i < number_of_correspondences; ++i)
+    for(int j = 0; j < 3; ++j)
       cws[0][j] += pws[3 * i + j];
 
-  for(int j = 0; j < 3; j++)
+  for(int j = 0; j < 3; ++j)
     cws[0][j] /= number_of_correspondences;
 
 
@@ -110,8 +110,8 @@ void epnp::choose_control_points(void)
   CvMat DC      = cvMat(3, 1, CV_64F, dc);
   CvMat UCt     = cvMat(3, 3, CV_64F, uct);
 
-  for(int i = 0; i < number_of_correspondences; i++)
-    for(int j = 0; j < 3; j++)
+  for(int i = 0; i < number_of_correspondences; ++i)
+    for(int j = 0; j < 3; ++j)
       PW0->data.db[3 * i + j] = pws[3 * i + j] - cws[0][j];
 
   cvMulTransposed(PW0, &PW0tPW0, 1);
@@ -119,9 +119,9 @@ void epnp::choose_control_points(void)
 
   cvReleaseMat(&PW0);
 
-  for(int i = 1; i < 4; i++) {
+  for(int i = 1; i < 4; ++i) {
     double k = sqrt(dc[i - 1] / number_of_correspondences);
-    for(int j = 0; j < 3; j++)
+    for(int j = 0; j < 3; ++j)
       cws[i][j] = cws[0][j] + k * uct[3 * (i - 1) + j];
   }
 }
@@ -132,17 +132,17 @@ void epnp::compute_barycentric_coordinates(void)
   CvMat CC     = cvMat(3, 3, CV_64F, cc);
   CvMat CC_inv = cvMat(3, 3, CV_64F, cc_inv);
 
-  for(int i = 0; i < 3; i++)
-    for(int j = 1; j < 4; j++)
+  for(int i = 0; i < 3; ++i)
+    for(int j = 1; j < 4; ++j)
       cc[3 * i + j - 1] = cws[j][i] - cws[0][i];
 
   cvInvert(&CC, &CC_inv, CV_SVD);
   double * ci = cc_inv;
-  for(int i = 0; i < number_of_correspondences; i++) {
+  for(int i = 0; i < number_of_correspondences; ++i) {
     double * pi = pws + 3 * i;
     double * a = alphas + 4 * i;
 
-    for(int j = 0; j < 3; j++)
+    for(int j = 0; j < 3; ++j)
       a[1 + j] =
 	ci[3 * j    ] * (pi[0] - cws[0][0]) +
 	ci[3 * j + 1] * (pi[1] - cws[0][1]) +
@@ -157,7 +157,7 @@ void epnp::fill_M(CvMat * M,
   double * M1 = M->data.db + row * 12;
   double * M2 = M1 + 12;
 
-  for(int i = 0; i < 4; i++) {
+  for(int i = 0; i < 4; ++i) {
     M1[3 * i    ] = as[i] * fu;
     M1[3 * i + 1] = 0.0;
     M1[3 * i + 2] = as[i] * (uc - u);
@@ -170,24 +170,24 @@ void epnp::fill_M(CvMat * M,
 
 void epnp::compute_ccs(const double * betas, const double * ut)
 {
-  for(int i = 0; i < 4; i++)
+  for(int i = 0; i < 4; ++i)
     ccs[i][0] = ccs[i][1] = ccs[i][2] = 0.0f;
 
-  for(int i = 0; i < 4; i++) {
+  for(int i = 0; i < 4; ++i) {
     const double * v = ut + 12 * (11 - i);
-    for(int j = 0; j < 4; j++)
-      for(int k = 0; k < 3; k++)
+    for(int j = 0; j < 4; ++j)
+      for(int k = 0; k < 3; ++k)
 	ccs[j][k] += betas[i] * v[3 * j + k];
   }
 }
 
 void epnp::compute_pcs(void)
 {
-  for(int i = 0; i < number_of_correspondences; i++) {
+  for(int i = 0; i < number_of_correspondences; ++i) {
     double * a = alphas + 4 * i;
     double * pc = pcs + 3 * i;
 
-    for(int j = 0; j < 3; j++)
+    for(int j = 0; j < 3; ++j)
       pc[j] = a[0] * ccs[0][j] + a[1] * ccs[1][j] + a[2] * ccs[2][j] + a[3] * ccs[3][j];
   }
 }
@@ -199,7 +199,7 @@ double epnp::compute_pose(double R[3][3], double t[3])
 
   CvMat * M = cvCreateMat(2 * number_of_correspondences, 12, CV_64F);
 
-  for(int i = 0; i < number_of_correspondences; i++)
+  for(int i = 0; i < number_of_correspondences; ++i)
     fill_M(M, 2 * i, alphas + 4 * i, us[2 * i], us[2 * i + 1]);
 
   double mtm[12 * 12], d[12], ut[12 * 12];
@@ -245,8 +245,8 @@ double epnp::compute_pose(double R[3][3], double t[3])
 void epnp::copy_R_and_t(const double R_src[3][3], const double t_src[3],
 			double R_dst[3][3], double t_dst[3])
 {
-  for(int i = 0; i < 3; i++) {
-    for(int j = 0; j < 3; j++)
+  for(int i = 0; i < 3; ++i) {
+    for(int j = 0; j < 3; ++j)
       R_dst[i][j] = R_src[i][j];
     t_dst[i] = t_src[i];
   }
@@ -269,7 +269,7 @@ double epnp::reprojection_error(const double R[3][3], const double t[3])
 {
   double sum2 = 0.0;
 
-  for(int i = 0; i < number_of_correspondences; i++) {
+  for(int i = 0; i < number_of_correspondences; ++i) {
     double * pw = pws + 3 * i;
     double Xc = dot(R[0], pw) + t[0];
     double Yc = dot(R[1], pw) + t[1];
@@ -291,16 +291,16 @@ void epnp::estimate_R_and_t(double R[3][3], double t[3])
   pc0[0] = pc0[1] = pc0[2] = 0.0;
   pw0[0] = pw0[1] = pw0[2] = 0.0;
 
-  for(int i = 0; i < number_of_correspondences; i++) {
+  for(int i = 0; i < number_of_correspondences; ++i) {
     const double * pc = pcs + 3 * i;
     const double * pw = pws + 3 * i;
 
-    for(int j = 0; j < 3; j++) {
+    for(int j = 0; j < 3; ++j) {
       pc0[j] += pc[j];
       pw0[j] += pw[j];
     }
   }
-  for(int j = 0; j < 3; j++) {
+  for(int j = 0; j < 3; ++j) {
     pc0[j] /= number_of_correspondences;
     pw0[j] /= number_of_correspondences;
   }
@@ -312,11 +312,11 @@ void epnp::estimate_R_and_t(double R[3][3], double t[3])
   CvMat ABt_V = cvMat(3, 3, CV_64F, abt_v);
 
   cvSetZero(&ABt);
-  for(int i = 0; i < number_of_correspondences; i++) {
+  for(int i = 0; i < number_of_correspondences; ++i) {
     double * pc = pcs + 3 * i;
     double * pw = pws + 3 * i;
 
-    for(int j = 0; j < 3; j++) {
+    for(int j = 0; j < 3; ++j) {
       abt[3 * j    ] += (pc[j] - pc0[j]) * (pw[0] - pw0[0]);
       abt[3 * j + 1] += (pc[j] - pc0[j]) * (pw[1] - pw0[1]);
       abt[3 * j + 2] += (pc[j] - pc0[j]) * (pw[2] - pw0[2]);
@@ -325,8 +325,8 @@ void epnp::estimate_R_and_t(double R[3][3], double t[3])
 
   cvSVD(&ABt, &ABt_D, &ABt_U, &ABt_V, CV_SVD_MODIFY_A);
 
-  for(int i = 0; i < 3; i++)
-    for(int j = 0; j < 3; j++)
+  for(int i = 0; i < 3; ++i)
+    for(int j = 0; j < 3; ++j)
       R[i][j] = dot(abt_u + 3 * i, abt_v + 3 * j);
 
   const double det =
@@ -354,11 +354,11 @@ void epnp::print_pose(const double R[3][3], const double t[3])
 void epnp::solve_for_sign(void)
 {
   if (pcs[2] < 0.0) {
-    for(int i = 0; i < 4; i++)
-      for(int j = 0; j < 3; j++)
+    for(int i = 0; i < 4; ++i)
+      for(int j = 0; j < 3; ++j)
 	ccs[i][j] = -ccs[i][j];
 
-    for(int i = 0; i < number_of_correspondences; i++) {
+    for(int i = 0; i < number_of_correspondences; ++i) {
       pcs[3 * i    ] = -pcs[3 * i];
       pcs[3 * i + 1] = -pcs[3 * i + 1];
       pcs[3 * i + 2] = -pcs[3 * i + 2];
@@ -389,7 +389,7 @@ void epnp::find_betas_approx_1(const CvMat * L_6x10, const CvMat * Rho,
   CvMat L_6x4 = cvMat(6, 4, CV_64F, l_6x4);
   CvMat B4    = cvMat(4, 1, CV_64F, b4);
 
-  for(int i = 0; i < 6; i++) {
+  for(int i = 0; i < 6; ++i) {
     cvmSet(&L_6x4, i, 0, cvmGet(L_6x10, i, 0));
     cvmSet(&L_6x4, i, 1, cvmGet(L_6x10, i, 1));
     cvmSet(&L_6x4, i, 2, cvmGet(L_6x10, i, 3));
@@ -421,7 +421,7 @@ void epnp::find_betas_approx_2(const CvMat * L_6x10, const CvMat * Rho,
   CvMat L_6x3  = cvMat(6, 3, CV_64F, l_6x3);
   CvMat B3     = cvMat(3, 1, CV_64F, b3);
 
-  for(int i = 0; i < 6; i++) {
+  for(int i = 0; i < 6; ++i) {
     cvmSet(&L_6x3, i, 0, cvmGet(L_6x10, i, 0));
     cvmSet(&L_6x3, i, 1, cvmGet(L_6x10, i, 1));
     cvmSet(&L_6x3, i, 2, cvmGet(L_6x10, i, 2));
@@ -453,7 +453,7 @@ void epnp::find_betas_approx_3(const CvMat * L_6x10, const CvMat * Rho,
   CvMat L_6x5 = cvMat(6, 5, CV_64F, l_6x5);
   CvMat B5    = cvMat(5, 1, CV_64F, b5);
 
-  for(int i = 0; i < 6; i++) {
+  for(int i = 0; i < 6; ++i) {
     cvmSet(&L_6x5, i, 0, cvmGet(L_6x10, i, 0));
     cvmSet(&L_6x5, i, 1, cvmGet(L_6x10, i, 1));
     cvmSet(&L_6x5, i, 2, cvmGet(L_6x10, i, 2));
@@ -486,22 +486,22 @@ void epnp::compute_L_6x10(const double * ut, double * l_6x10)
 
   double dv[4][6][3];
 
-  for(int i = 0; i < 4; i++) {
+  for(int i = 0; i < 4; ++i) {
     int a = 0, b = 1;
-    for(int j = 0; j < 6; j++) {
+    for(int j = 0; j < 6; ++j) {
       dv[i][j][0] = v[i][3 * a    ] - v[i][3 * b];
       dv[i][j][1] = v[i][3 * a + 1] - v[i][3 * b + 1];
       dv[i][j][2] = v[i][3 * a + 2] - v[i][3 * b + 2];
 
-      b++;
+      ++b;
       if (b > 3) {
-	a++;
+  ++a;
 	b = a + 1;
       }
     }
   }
 
-  for(int i = 0; i < 6; i++) {
+  for(int i = 0; i < 6; ++i) {
     double * row = l_6x10 + 10 * i;
 
     row[0] =        dot(dv[0][i], dv[0][i]);
@@ -530,7 +530,7 @@ void epnp::compute_rho(double * rho)
 void epnp::compute_A_and_b_gauss_newton(const double * l_6x10, const double * rho,
 					double betas[4], CvMat * A, CvMat * b)
 {
-  for(int i = 0; i < 6; i++) {
+  for(int i = 0; i < 6; ++i) {
     const double * rowL = l_6x10 + i * 10;
     double * rowA = A->data.db + i * 4;
 
@@ -565,12 +565,12 @@ void epnp::gauss_newton(const CvMat * L_6x10, const CvMat * Rho,
   CvMat B = cvMat(6, 1, CV_64F, b);
   CvMat X = cvMat(4, 1, CV_64F, x);
 
-  for(int k = 0; k < iterations_number; k++) {
+  for(int k = 0; k < iterations_number; ++k) {
     compute_A_and_b_gauss_newton(L_6x10->data.db, Rho->data.db,
 				 betas, &A, &B);
     qr_solve(&A, &B, &X);
 
-    for(int i = 0; i < 4; i++)
+    for(int i = 0; i < 4; ++i)
       betas[i] += x[i];
   }
 }
@@ -594,9 +594,9 @@ void epnp::qr_solve(CvMat * A, CvMat * b, CvMat * X)
   }
 
   double * pA = A->data.db, * ppAkk = pA;
-  for(int k = 0; k < nc; k++) {
+  for(int k = 0; k < nc; ++k) {
     double * ppAik = ppAkk, eta = fabs(*ppAik);
-    for(int i = k + 1; i < nr; i++) {
+    for(int i = k + 1; i < nr; ++i) {
       double elt = fabs(*ppAik);
       if (eta < elt) eta = elt;
       ppAik += nc;
@@ -608,7 +608,7 @@ void epnp::qr_solve(CvMat * A, CvMat * b, CvMat * X)
       return;
     } else {
       double * ppAik = ppAkk, sum = 0.0, inv_eta = 1. / eta;
-      for(int i = k; i < nr; i++) {
+      for(int i = k; i < nr; ++i) {
 	*ppAik *= inv_eta;
 	sum += *ppAik * *ppAik;
 	ppAik += nc;
@@ -619,15 +619,15 @@ void epnp::qr_solve(CvMat * A, CvMat * b, CvMat * X)
       *ppAkk += sigma;
       A1[k] = sigma * *ppAkk;
       A2[k] = -eta * sigma;
-      for(int j = k + 1; j < nc; j++) {
+      for(int j = k + 1; j < nc; ++j) {
 	double * ppAik = ppAkk, sum = 0;
-	for(int i = k; i < nr; i++) {
+  for(int i = k; i < nr; ++i) {
 	  sum += *ppAik * ppAik[j - k];
 	  ppAik += nc;
 	}
 	double tau = sum / A1[k];
 	ppAik = ppAkk;
-	for(int i = k; i < nr; i++) {
+  for(int i = k; i < nr; ++i) {
 	  ppAik[j - k] -= tau * *ppAik;
 	  ppAik += nc;
 	}
@@ -638,15 +638,15 @@ void epnp::qr_solve(CvMat * A, CvMat * b, CvMat * X)
 
   // b <- Qt b
   double * ppAjj = pA, * pb = b->data.db;
-  for(int j = 0; j < nc; j++) {
+  for(int j = 0; j < nc; ++j) {
     double * ppAij = ppAjj, tau = 0;
-    for(int i = j; i < nr; i++)	{
+    for(int i = j; i < nr; ++i)	{
       tau += *ppAij * pb[i];
       ppAij += nc;
     }
     tau /= A1[j];
     ppAij = ppAjj;
-    for(int i = j; i < nr; i++) {
+    for(int i = j; i < nr; ++i) {
       pb[i] -= tau * *ppAij;
       ppAij += nc;
     }
@@ -659,9 +659,9 @@ void epnp::qr_solve(CvMat * A, CvMat * b, CvMat * X)
   for(int i = nc - 2; i >= 0; i--) {
     double * ppAij = pA + i * nc + (i + 1), sum = 0;
 
-    for(int j = i + 1; j < nc; j++) {
+    for(int j = i + 1; j < nc; ++j) {
       sum += *ppAij * pX[j];
-      ppAij++;
+      ++ppAij;
     }
     pX[i] = (pb[i] - sum) / A2[i];
   }

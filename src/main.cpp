@@ -108,7 +108,7 @@ int main(int /*argc*/, char ** /*argv*/)
   random_pose(R_true, t_true);
 
   PnP.reset_correspondences();
-  for(int i = 0; i < n; i++) {
+  for(int i = 0; i < n; ++i) {
     double Xw, Yw, Zw, u, v;
 
     random_point(Xw, Yw, Zw);
